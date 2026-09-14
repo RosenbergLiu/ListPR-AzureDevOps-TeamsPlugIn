@@ -1,0 +1,59 @@
+# Visual Studio / VS Code / Rider
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.slnLaunch.user
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+dist/
+publish/
+*.log
+*.tmp
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Teams Toolkit / M365 Agents Toolkit environment & package outputs
+appPackage/build/
+env/.env.*.user
+env/.env.local
+env/.env.dev
+env/.env.prod
+.env
+.env.local
+.env.*.local
+*.local.yml
+
+# Secrets & Local Configurations
+appsettings.Development.json
+appsettings.Local.json
+appsettings.Playground.json
+*.pfx
+*.pem
+*.key
+*.cer
+*.crt
+*.secret
+credentials.json
+local.settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
