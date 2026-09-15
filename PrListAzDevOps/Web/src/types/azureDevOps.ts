@@ -62,6 +62,26 @@ export interface AzureDevOpsListResponse<T> {
   value: T[];
 }
 
+export type PullRequestOffsets = Record<string, number>;
+
+export interface PullRequestFilters {
+  showDrafts: boolean;
+  createdByMeOnly: boolean;
+  reviewerContainsMeOnly: boolean;
+}
+
+export interface SelectedRepository {
+  organization: string;
+  projectId: string;
+  projectName: string;
+  repositoryId: string;
+  repositoryName: string;
+}
+
+export interface ListedPullRequest extends GitPullRequest {
+  organization: string;
+}
+
 export interface AuthConfig {
   clientId?: string;
   tenantId?: string;

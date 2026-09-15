@@ -246,69 +246,8 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Pages and settings */
-.page-navigation {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 1.5rem;
-}
-
-.page-nav-button {
-  padding: 0.75rem 0;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.page-nav-button:hover,
-.page-nav-button.active {
-  color: var(--primary-color);
-}
-
-.page-nav-button.active {
-  border-bottom-color: var(--primary-color);
-}
-
-.page-nav-button:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 3px;
-}
-
-.page-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.page-heading > div {
-  min-width: 0;
-}
-
-.page-title {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.5rem;
-}
-
-.page-description {
-  margin: 0.5rem 0 0;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.settings-page {
-  max-width: 720px;
-}
-
-.settings-card {
+/* Filters */
+.filters-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -317,24 +256,203 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.settings-fields {
+.filters-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: flex-end;
 }
 
-.settings-fields .form-help-text,
-.settings-fields .alert {
-  margin: 0.75rem 0 0;
+@media (max-width: 760px) {
+  .filters-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.repository-search {
+.repository-picker {
+  position: relative;
+}
+
+.repository-picker summary {
+  cursor: pointer;
+}
+
+.repository-picker summary[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.repository-picker summary:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.repository-picker-panel {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  width: max(100%, 300px);
+  max-width: calc(100vw - 3rem);
+  padding: 0.75rem;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.page-navigation {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.repository-search .btn {
+.pr-filter-toggles {
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-card);
+  min-width: 0;
+}
+
+.pr-filter-toggles legend {
+  font-weight: 600;
+  padding: 0 0.25rem;
+}
+
+.pr-filter-toggles p {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.pr-toggle-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+}
+
+.pr-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.pr-toggle input {
+  appearance: none;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 1.2rem;
+  border: 1px solid var(--text-secondary);
+  border-radius: 1rem;
+  background-color: var(--bg-hover);
+  position: relative;
+  cursor: pointer;
+}
+
+.pr-toggle input::after {
+  content: "";
+  position: absolute;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background-color: var(--text-secondary);
+  top: calc(0.2rem - 1px);
+  left: calc(0.2rem - 1px);
+}
+
+.pr-toggle input:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.pr-toggle input:checked::after {
+  background-color: var(--primary-text);
+  transform: translateX(0.8rem);
+}
+
+.pr-toggle input:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.saved-repositories {
+  padding: 1rem 1.25rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.saved-repository-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.saved-repository,
+.pr-page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.saved-repository {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.saved-repository > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.saved-repository button {
+  flex-shrink: 0;
+}
+
+.saved-repository-scope,
+.pr-scope {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.pr-page-heading {
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.repository-picker-hint {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.repository-options {
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.repository-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem;
+  justify-content: space-between;
+  overflow-wrap: anywhere;
+}
+
+.repository-option:hover {
+  background-color: var(--bg-hover);
+}
+
+.repository-option button {
   flex-shrink: 0;
 }
 
@@ -348,7 +466,6 @@ body {
 
 .form-control {
   width: 100%;
-  min-width: 0;
   padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
   border-radius: 4px;
@@ -361,11 +478,6 @@ body {
 
 .form-control:focus {
   border-color: var(--primary-color);
-}
-
-.form-control:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .loading-badge {
@@ -779,37 +891,4 @@ body {
   background-color: var(--error-bg);
   color: var(--error-text);
   border: 1px solid var(--error-text);
-}
-
-@media (max-width: 640px) {
-  .app-header {
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem;
-  }
-
-  .header-title {
-    font-size: 1.1rem;
-  }
-
-  .user-profile {
-    flex-wrap: wrap;
-  }
-
-  .app-main-content {
-    padding: 1rem;
-  }
-
-  .page-heading {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .settings-card {
-    padding: 1rem;
-  }
-
-  .prompt-state {
-    padding: 2rem 1rem;
-  }
 }

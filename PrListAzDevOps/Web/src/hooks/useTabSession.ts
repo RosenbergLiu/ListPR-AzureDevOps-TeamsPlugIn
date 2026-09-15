@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as teamsJs from "@microsoft/teams-js";
-import type { UserProfile } from "../types/azureDevOps";
+import type { PullRequestFilters, UserProfile } from "../types/azureDevOps";
 import { restoreUser, signOut } from "../services/authService";
 import { fetchActivePullRequests, fetchProjects, fetchRepositories } from "../services/azureDevOpsService";
 import {
-  clearSession, createSession, readSession, resetPullRequests, sameIdentity, savedIdentity,
-  selectOrganization, selectPage, selectProject, writeSession,
+  addRepository, changePrFilters, clearSession, createSession, readSession, removeRepository, repositoryFromPicker, resetPullRequests, sameIdentity, savedIdentity,
+  selectOrganization, selectProject, writeSession,
 } from "../services/tabSession";
 import type { LoginState, TabPage, TabSession, TabView } from "../services/tabSession";
 
@@ -23,7 +23,6 @@ export function useTabSession() {
   const [signingOut, setSigningOut] = useState(false);
   const currentSession = useRef(session);
   currentSession.current = session;
-  const scrollRestored = useRef(false);
   const view = session.view;
 
   const updateView = useCallback((update: (previous: TabView) => TabView) => {
@@ -83,16 +82,18 @@ export function useTabSession() {
   }, [ready, signingOut, session, persist]);
 
   useLayoutEffect(() => {
-    if (!ready || !user || scrollRestored.current) return;
-    window.scrollTo(0, currentSession.current.view.scrollY);
-    scrollRestored.current = true;
-  }, [ready, user]);
+    if (!ready || !user) return;
+    const saved = currentSession.current.view;
+    window.scrollTo(0, saved.page === "settings" ? saved.settingsScrollY : saved.scrollY);
+  }, [ready, user, view.page]);
 
   useEffect(() => {
     if (!ready || signingOut) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const saveScroll = () => {
-      updateView(previous => ({ ...previous, scrollY: window.scrollY }));
+      updateView(previous => ({
+        ...previous, [previous.page === "settings" ? "settingsScrollY" : "scrollY"]: window.scrollY,
+      }));
     };
     const onScroll = () => {
       clearTimeout(timer);
@@ -100,7 +101,11 @@ export function useTabSession() {
     };
     const flush = () => {
       const snapshot = currentSession.current;
-      persist({ ...snapshot, view: { ...snapshot.view, scrollY: window.scrollY } });
+      persist({
+        ...snapshot, view: {
+          ...snapshot.view, [snapshot.view.page === "settings" ? "settingsScrollY" : "scrollY"]: window.scrollY,
+        },
+      });
     };
     const onVisibilityChange = () => { if (document.visibilityState === "hidden") flush(); };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -112,10 +117,10 @@ export function useTabSession() {
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [ready, signingOut, persist, updateView]);
+  }, [ready, signingOut, view.page, persist, updateView]);
 
   useEffect(() => {
-    if (!ready || !user || !view.organization.trim() || view.projectsStatus !== "idle") return;
+    if (!ready || !user || view.page !== "settings" || !view.organization.trim() || view.projectsStatus !== "idle") return;
     let cancelled = false;
     const timer = setTimeout(() => {
       void fetchProjects(view.organization, user).then(projects => {
@@ -129,10 +134,10 @@ export function useTabSession() {
       });
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [ready, user, view.organization, view.projectsStatus, updateView]);
+  }, [ready, user, view.page, view.organization, view.projectsStatus, updateView]);
 
   useEffect(() => {
-    if (!ready || !user || !view.selectedProject || view.repositoriesStatus !== "idle") return;
+    if (!ready || !user || view.page !== "settings" || !view.selectedProject || view.repositoriesStatus !== "idle") return;
     let cancelled = false;
     void fetchRepositories(view.organization, view.selectedProject, user).then(repositories => {
       if (!cancelled) updateView(previous => ({ ...previous, repositories, repositoriesStatus: "ready", repositoriesError: null }));
@@ -140,24 +145,25 @@ export function useTabSession() {
       if (!cancelled) updateView(previous => ({ ...previous, repositoriesStatus: "error", repositoriesError: errorMessage(error) }));
     });
     return () => { cancelled = true; };
-  }, [ready, user, view.organization, view.selectedProject, view.repositoriesStatus, updateView]);
+  }, [ready, user, view.page, view.organization, view.selectedProject, view.repositoriesStatus, updateView]);
 
   useEffect(() => {
-    if (!ready || !user || !view.selectedProject || view.prsStatus !== "idle") return;
+    if (!ready || !user || view.page !== "prs" || !view.repositoryList.length || view.prsStatus !== "idle") return;
     let cancelled = false;
+    const controller = new AbortController();
     void fetchActivePullRequests(
-      view.organization, view.selectedProject, user, view.selectedRepository || undefined,
-      20, view.pullRequests.length,
+      view.repositoryList, user, 20, view.repositoryOffsets, controller.signal, view.prFilters,
     ).then(result => {
       if (!cancelled) updateView(previous => ({
         ...previous, pullRequests: [...previous.pullRequests, ...result.pullRequests],
-        hasMore: result.hasMore, prsStatus: "ready", prError: null,
+        hasMore: result.hasMore, repositoryOffsets: result.nextOffsets, prsStatus: "ready", prError: null,
       }));
     }).catch(error => {
+      controller.abort();
       if (!cancelled) updateView(previous => ({ ...previous, prsStatus: "error", prError: errorMessage(error) }));
     });
-    return () => { cancelled = true; };
-  }, [ready, user, view.organization, view.selectedProject, view.selectedRepository, view.prsStatus, view.pullRequests.length, updateView]);
+    return () => { cancelled = true; controller.abort(); };
+  }, [ready, user, view.page, view.repositoryList, view.prsStatus, view.repositoryOffsets, view.prFilters, updateView]);
 
   function signedIn(nextUser: UserProfile) {
     if (signingOut) return;
@@ -165,20 +171,18 @@ export function useTabSession() {
       const identity = savedIdentity(nextUser);
       const nextView = sameIdentity(previous.identity, identity) ? previous.view : createSession().view;
       return {
-        version: 1, identity,
+        version: 4, identity,
         view: { ...nextView, theme: previous.view.theme, login: { ...previous.view.login, isOpen: false } },
       };
     });
     setSessionError(null);
     setUser(nextUser);
-    scrollRestored.current = false;
   }
 
   async function signedOut() {
     const previousUser = user;
     setSigningOut(true);
     setUser(null);
-    scrollRestored.current = false;
     setSession(createSession());
     currentSession.current = createSession();
     window.scrollTo(0, 0);
@@ -199,15 +203,27 @@ export function useTabSession() {
 
   return {
     view, user, ready, signingOut, sessionError, storageError, signedIn, signedOut,
-    changePage: (page: TabPage) => {
-      updateView(previous => selectPage(previous, page));
-      window.scrollTo(0, 0);
-    },
     updateLogin: (patch: Partial<LoginState>) => updateView(previous => ({ ...previous, login: { ...previous.login, ...patch } })),
     changeOrganization: (organization: string) => updateView(previous => selectOrganization(previous, organization)),
     changeProject: (project: string) => updateView(previous => selectProject(previous, project)),
-    changeRepository: (selectedRepository: string) => updateView(previous => resetPullRequests({ ...previous, selectedRepository })),
+    addRepository: (repositoryId: string) => {
+      try {
+        const entry = repositoryFromPicker(currentSession.current.view, repositoryId);
+        updateView(previous => addRepository(previous, entry));
+        setSessionError(null);
+      } catch (error) {
+        setSessionError(errorMessage(error));
+      }
+    },
+    removeRepository: (key: string) => updateView(previous => removeRepository(previous, key)),
+    changePage: (page: TabPage) => {
+      const position = window.scrollY;
+      updateView(previous => ({
+        ...previous, [previous.page === "settings" ? "settingsScrollY" : "scrollY"]: position, page,
+      }));
+    },
     changeRepositorySearch: (repositorySearch: string) => updateView(previous => ({ ...previous, repositorySearch })),
+    changePrFilters: (patch: Partial<PullRequestFilters>) => updateView(previous => changePrFilters(previous, patch)),
     refresh: () => updateView(resetPullRequests),
     retryPrs: () => updateView(previous => ({ ...previous, prsStatus: "idle", prError: null })),
     loadMore: () => updateView(previous => previous.prsStatus === "ready" && previous.hasMore

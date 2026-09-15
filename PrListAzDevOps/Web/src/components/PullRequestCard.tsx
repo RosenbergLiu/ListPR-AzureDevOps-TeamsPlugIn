@@ -81,6 +81,7 @@ export const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, organizati
 
       <div className="pr-meta-row">
         <div className="pr-repo-branch">
+          <span className="pr-scope">{organization} / {pr.repository.project?.name}</span>
           <span className="repo-pill" title={`Repository: ${pr.repository?.name}`}>
             📦 {pr.repository?.name || "Repository"}
           </span>

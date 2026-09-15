@@ -5,12 +5,13 @@ A Microsoft Teams Tab app for viewing and tracking active Azure DevOps pull requ
 ## Key Features
 
 - **Entra ID & PAT Authentication**: Interactive Microsoft Entra ID sign-in or Personal Access Token (PAT) fallback.
-- **Dedicated Settings Page**: Configure the organization, project, and optional repository separately from the PR list.
-- **Repository Search**: Quickly filter repository names with a case-insensitive search while keeping the current selection and the All Repositories option available.
+- **Settings Repository List**: Search and add repositories from different organizations/projects to a saved list; remove them directly from the list. Browsing the picker never clears saved entries.
+- **Active PR Explorer**: The Pull Requests page shows only repositories in the Settings list. An empty list prompts you to add repositories, not load all PRs.
+- **PR Filters**: Toggle **Show Draft** (on by default), **Created by me only**, and **Reviewer contains me only**. Filters combine; "me" uses the authenticated Azure DevOps identity in each organization for either sign-in method.
 - **Rich PR Details**: Branch flows, draft status badges, reviewer votes, and Azure DevOps links.
-- **Pagination & Refresh**: 20 PRs per page with "Load More" and manual refresh.
+- **Pagination & Refresh**: 20 PRs total per page across selected repositories, with "Load More" and manual refresh.
 - **Teams Fluent Theming**: Supports Light, Dark, and High Contrast modes.
-- **Tab Session Restore**: Sign-in, selections, current page, repository search, loaded PR pages, theme, and scroll position survive switching away and returning.
+- **Tab Session Restore**: Sign-in, repository list, current page, search text, PR toggles, loaded PR pages, theme, and each page's scroll position survive switching away and returning.
 
 ## Quick Start (Local Run)
 
@@ -23,13 +24,6 @@ A Microsoft Teams Tab app for viewing and tracking active Azure DevOps pull requ
 For the full solution, use **Build Solution** in Visual Studio 2026 with Microsoft 365 Agents Toolkit installed, or its 64-bit MSBuild (`MSBuild\Current\Bin\amd64\MSBuild.exe`) with `.\PrListAzDevOps.slnx /t:Build`.
 Plain `dotnet build` of the solution cannot resolve the Visual Studio-provided `Microsoft.TeamsFx.Sdk`; use the backend project command above for CLI builds.
 TypeScript checking runs through npm; the duplicate Visual Studio TypeScript compilation is disabled so both build paths use the project's compiler.
-
-## Choosing Projects and Repositories
-
-1. Sign in, then open **Settings** from the app navigation.
-2. Enter your Azure DevOps organization and choose a project.
-3. Use **Search repositories** to narrow the repository dropdown by name, then choose a repository or **All Repositories**. Searching does not change the selection; **Clear search** restores the full list. Changing the organization or project clears the repository selection and search.
-4. Changes apply automatically. Return to **Pull Requests** to see the current source summary and PR list. **Refresh** and **Load More** remain on this page.
 
 ## Entra ID App Registration (Optional for SSO)
 
@@ -48,4 +42,6 @@ This repository contains **no credentials, secret keys, or company-specific data
 - Microsoft sign-in is restored from [MSAL's session cache](https://learn.microsoft.com/en-us/entra/msal/javascript/browser/caching); tokens renew silently when possible. Expired consent or revoked credentials still require sign-in.
 - PAT sign-in retains the PAT only in session storage. **Sign Out** clears the app session and its Microsoft account cache without signing out of Teams.
 - Returning restores loaded pages without resetting to page one; **Refresh** deliberately reloads page one. Unfinished requests resume, and storage failures display a warning.
+- Changing a PR toggle restarts matching results at page one. Hiding drafts still fills pages with up to 20 matching PRs; an identity lookup failure shows an error rather than ignoring a "me" filter.
+- Existing explicit repository selections migrate automatically; old "all repositories" results are cleared. Adding/removing list entries resets PR pages; browsing organizations/projects only resets the picker.
 - Run the production-module regression tests with Node.js 24: `npm --prefix .\PrListAzDevOps\Web test`.

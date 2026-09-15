@@ -1,10 +1,10 @@
 import React from "react";
-import { GitPullRequest } from "../types/azureDevOps";
+import type { ListedPullRequest } from "../types/azureDevOps";
+import { getRepositoryKey } from "../services/repositoryList";
 import { PullRequestCard } from "./PullRequestCard";
 
 interface PullRequestListProps {
-  pullRequests: GitPullRequest[];
-  organization: string;
+  pullRequests: ListedPullRequest[];
   isLoading: boolean;
   isLoadingMore: boolean;
   error: string | null;
@@ -15,7 +15,6 @@ interface PullRequestListProps {
 
 export const PullRequestList: React.FC<PullRequestListProps> = ({
   pullRequests,
-  organization,
   isLoading,
   isLoadingMore,
   error,
@@ -50,7 +49,7 @@ export const PullRequestList: React.FC<PullRequestListProps> = ({
       <div className="list-empty-state">
         <div className="empty-icon">🎉</div>
         <h3>No active pull requests</h3>
-        <p>There are no active pull requests for the selected organization, project, and repository.</p>
+        <p>No active pull requests in your saved repositories match the current filters.</p>
       </div>
     );
   }
@@ -65,7 +64,8 @@ export const PullRequestList: React.FC<PullRequestListProps> = ({
 
       <div className="pr-list">
         {pullRequests.map((pr) => (
-          <PullRequestCard key={pr.pullRequestId} pr={pr} organization={organization} />
+          <PullRequestCard key={`${getRepositoryKey({ organization: pr.organization, repositoryId: pr.repository.id })}:${pr.pullRequestId}`}
+            pr={pr} organization={pr.organization} />
         ))}
       </div>
 
