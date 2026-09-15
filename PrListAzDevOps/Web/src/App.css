@@ -246,8 +246,69 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Filters */
-.filters-card {
+/* Pages and settings */
+.page-navigation {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.page-nav-button {
+  padding: 0.75rem 0;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.page-nav-button:hover,
+.page-nav-button.active {
+  color: var(--primary-color);
+}
+
+.page-nav-button.active {
+  border-bottom-color: var(--primary-color);
+}
+
+.page-nav-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.page-heading > div {
+  min-width: 0;
+}
+
+.page-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+}
+
+.page-description {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.settings-page {
+  max-width: 720px;
+}
+
+.settings-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -256,11 +317,25 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.filters-grid {
+.settings-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) auto;
-  gap: 1rem;
-  align-items: flex-end;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.settings-fields .form-help-text,
+.settings-fields .alert {
+  margin: 0.75rem 0 0;
+}
+
+.repository-search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.repository-search .btn {
+  flex-shrink: 0;
 }
 
 .filter-label {
@@ -273,6 +348,7 @@ body {
 
 .form-control {
   width: 100%;
+  min-width: 0;
   padding: 0.5rem 0.75rem;
   font-size: 0.9rem;
   border-radius: 4px;
@@ -285,6 +361,11 @@ body {
 
 .form-control:focus {
   border-color: var(--primary-color);
+}
+
+.form-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .loading-badge {
@@ -700,3 +781,35 @@ body {
   border: 1px solid var(--error-text);
 }
 
+@media (max-width: 640px) {
+  .app-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .user-profile {
+    flex-wrap: wrap;
+  }
+
+  .app-main-content {
+    padding: 1rem;
+  }
+
+  .page-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .settings-card {
+    padding: 1rem;
+  }
+
+  .prompt-state {
+    padding: 2rem 1rem;
+  }
+}

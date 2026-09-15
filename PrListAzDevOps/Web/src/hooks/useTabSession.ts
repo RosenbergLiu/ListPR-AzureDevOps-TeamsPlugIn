@@ -5,9 +5,9 @@ import { restoreUser, signOut } from "../services/authService";
 import { fetchActivePullRequests, fetchProjects, fetchRepositories } from "../services/azureDevOpsService";
 import {
   clearSession, createSession, readSession, resetPullRequests, sameIdentity, savedIdentity,
-  selectOrganization, selectProject, writeSession,
+  selectOrganization, selectPage, selectProject, writeSession,
 } from "../services/tabSession";
-import type { LoginState, TabSession, TabView } from "../services/tabSession";
+import type { LoginState, TabPage, TabSession, TabView } from "../services/tabSession";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "The operation failed. Please try again.";
@@ -199,10 +199,15 @@ export function useTabSession() {
 
   return {
     view, user, ready, signingOut, sessionError, storageError, signedIn, signedOut,
+    changePage: (page: TabPage) => {
+      updateView(previous => selectPage(previous, page));
+      window.scrollTo(0, 0);
+    },
     updateLogin: (patch: Partial<LoginState>) => updateView(previous => ({ ...previous, login: { ...previous.login, ...patch } })),
     changeOrganization: (organization: string) => updateView(previous => selectOrganization(previous, organization)),
     changeProject: (project: string) => updateView(previous => selectProject(previous, project)),
     changeRepository: (selectedRepository: string) => updateView(previous => resetPullRequests({ ...previous, selectedRepository })),
+    changeRepositorySearch: (repositorySearch: string) => updateView(previous => ({ ...previous, repositorySearch })),
     refresh: () => updateView(resetPullRequests),
     retryPrs: () => updateView(previous => ({ ...previous, prsStatus: "idle", prError: null })),
     loadMore: () => updateView(previous => previous.prsStatus === "ready" && previous.hasMore

@@ -1,6 +1,7 @@
 import type { GitPullRequest, GitRepository, SavedIdentity, TeamProjectReference, UserProfile } from "../types/azureDevOps";
 
 export type LoadStatus = "idle" | "ready" | "error";
+export type TabPage = "pullRequests" | "settings";
 
 export interface LoginState {
   isOpen: boolean;
@@ -11,11 +12,13 @@ export interface LoginState {
 
 export interface TabView {
   theme: string;
+  page: TabPage;
   organization: string;
   projects: TeamProjectReference[];
   selectedProject: string;
   repositories: GitRepository[];
   selectedRepository: string;
+  repositorySearch: string;
   pullRequests: GitPullRequest[];
   hasMore: boolean;
   projectsStatus: LoadStatus;
@@ -42,8 +45,8 @@ export function createSession(): TabSession {
     version: 1,
     identity: null,
     view: {
-      theme: "default", organization: "", projects: [], selectedProject: "",
-      repositories: [], selectedRepository: "", pullRequests: [], hasMore: false,
+      theme: "default", page: "pullRequests", organization: "", projects: [], selectedProject: "",
+      repositories: [], selectedRepository: "", repositorySearch: "", pullRequests: [], hasMore: false,
       projectsStatus: "idle", repositoriesStatus: "idle", prsStatus: "idle",
       projectsError: null, repositoriesError: null, prError: null, scrollY: 0,
       login: { isOpen: false, authTab: "entra", clientId: "", tenantId: "" },
@@ -71,9 +74,13 @@ export function resetPullRequests(view: TabView): TabView {
   return { ...view, pullRequests: [], hasMore: false, prsStatus: "idle", prError: null, scrollY: 0 };
 }
 
+export function selectPage(view: TabView, page: TabPage): TabView {
+  return view.page === page ? view : { ...view, page, scrollY: 0 };
+}
+
 export function selectProject(view: TabView, selectedProject: string): TabView {
   return resetPullRequests({
-    ...view, selectedProject, selectedRepository: "", repositories: [],
+    ...view, selectedProject, selectedRepository: "", repositorySearch: "", repositories: [],
     repositoriesStatus: "idle", repositoriesError: null,
   });
 }
@@ -125,7 +132,8 @@ function isSession(value: unknown): value is TabSession {
   if (!isRecord(value) || value.version !== 1 || !isRecord(value.view)) return false;
   if (value.identity !== null && !isSavedIdentity(value.identity)) return false;
   const view = value.view;
-  return ["theme", "organization", "selectedProject", "selectedRepository"].every(key => typeof view[key] === "string")
+  return ["theme", "organization", "selectedProject", "selectedRepository", "repositorySearch"].every(key => typeof view[key] === "string")
+    && (view.page === "pullRequests" || view.page === "settings")
     && ["projectsStatus", "repositoriesStatus", "prsStatus"].every(key => ["idle", "ready", "error"].includes(String(view[key])))
     && ["projectsError", "repositoriesError", "prError"].every(key => view[key] === null || typeof view[key] === "string")
     && Array.isArray(view.projects) && view.projects.every(isProject)
@@ -146,6 +154,10 @@ export function readSession(scope: string, storage?: SessionStorage): TabSession
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error;
     throw new Error("The saved tab session is unreadable. A new session has been started.");
+  }
+  // Older version 1 sessions predate settings navigation and repository search.
+  if (isRecord(value) && value.version === 1 && isRecord(value.view)) {
+    value.view = { page: "pullRequests", repositorySearch: "", ...value.view };
   }
   if (!isSession(value)) throw new Error("The saved tab session is incompatible. A new session has been started.");
   return value;

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   clearSession, createSession, readSession, resetPullRequests, sameIdentity, savedIdentity,
-  selectOrganization, selectProject, writeSession,
+  selectOrganization, selectPage, selectProject, writeSession,
 } from "./tabSession.ts";
 
 class MemoryStorage {
@@ -44,6 +44,45 @@ test("tab remount restores sign-in, filters, all loaded pages, drafts, theme and
   writeSession("test-user:test-tab", original, storage);
   assert.deepEqual(readSession("test-user:test-tab", storage), original);
   assert.equal(readSession("test-user:test-tab", storage).view.pullRequests.length, 40);
+});
+
+test("settings navigation and repository search survive tab remounts", () => {
+  const storage = new MemoryStorage();
+  const original = loadedSession();
+  original.view.page = "settings";
+  original.view.repositorySearch = " TEST ";
+  writeSession("test", original, storage);
+  assert.deepEqual(readSession("test", storage), original);
+});
+
+test("sessions saved before Settings retain their selections, sign-in and loaded pages", () => {
+  const storage = new MemoryStorage();
+  const original = loadedSession();
+  const legacy = structuredClone(original);
+  delete legacy.view.page;
+  delete legacy.view.repositorySearch;
+  writeSession("test", legacy, storage);
+  assert.deepEqual(readSession("test", storage), original);
+});
+
+test("invalid saved settings navigation and search values are reported", () => {
+  const storage = new MemoryStorage();
+  for (const patch of [{ page: "unknown" }, { page: null }, { repositorySearch: 123 }, { repositorySearch: null }]) {
+    const original = loadedSession();
+    Object.assign(original.view, patch);
+    writeSession("test", original, storage);
+    assert.throws(() => readSession("test", storage), /incompatible/);
+  }
+});
+
+test("page navigation preserves selection, search and loaded PR pages without reloading", () => {
+  const view = loadedSession().view;
+  view.repositorySearch = "test";
+  const settings = selectPage(view, "settings");
+  assert.deepEqual(settings, { ...view, page: "settings", scrollY: 0 });
+  assert.equal(settings.pullRequests, view.pullRequests);
+  assert.deepEqual(selectPage(settings, "pullRequests"), { ...view, scrollY: 0 });
+  assert.equal(selectPage(view, "pullRequests"), view);
 });
 
 test("cached empty and exact-page results preserve their completion status", () => {
@@ -118,19 +157,26 @@ test("storage denial and quota failures propagate for a visible persistence warn
 
 test("organization/project/filter changes reset only dependent state", () => {
   const view = loadedSession().view;
+  view.page = "settings";
+  view.repositorySearch = "test";
   const nextProject = selectProject(view, "another-project");
   assert.equal(nextProject.organization, view.organization);
   assert.deepEqual(nextProject.projects, view.projects);
   assert.deepEqual(nextProject.repositories, []);
   assert.equal(nextProject.selectedRepository, "");
+  assert.equal(nextProject.repositorySearch, "");
+  assert.equal(nextProject.page, "settings");
   assert.deepEqual(nextProject.pullRequests, []);
   assert.equal(nextProject.prsStatus, "idle");
   const nextOrganization = selectOrganization(view, "another-org");
   assert.equal(nextOrganization.selectedProject, "");
   assert.deepEqual(nextOrganization.projects, []);
   assert.equal(nextOrganization.projectsStatus, "idle");
+  assert.equal(nextOrganization.repositorySearch, "");
+  assert.equal(nextOrganization.selectedRepository, "");
   const refreshed = resetPullRequests(view);
   assert.equal(refreshed.selectedRepository, view.selectedRepository);
+  assert.equal(refreshed.repositorySearch, view.repositorySearch);
   assert.equal(refreshed.scrollY, 0);
   assert.equal(refreshed.hasMore, false);
 });

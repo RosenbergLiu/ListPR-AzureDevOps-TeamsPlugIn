@@ -5,11 +5,12 @@ A Microsoft Teams Tab app for viewing and tracking active Azure DevOps pull requ
 ## Key Features
 
 - **Entra ID & PAT Authentication**: Interactive Microsoft Entra ID sign-in or Personal Access Token (PAT) fallback.
-- **Active PR Explorer**: Organization, project, and optional repository filters.
+- **Dedicated Settings Page**: Configure the organization, project, and optional repository separately from the PR list.
+- **Repository Search**: Quickly filter repository names with a case-insensitive search while keeping the current selection and the All Repositories option available.
 - **Rich PR Details**: Branch flows, draft status badges, reviewer votes, and Azure DevOps links.
 - **Pagination & Refresh**: 20 PRs per page with "Load More" and manual refresh.
 - **Teams Fluent Theming**: Supports Light, Dark, and High Contrast modes.
-- **Tab Session Restore**: Sign-in, selections, loaded PR pages, theme, and scroll position survive switching away and returning.
+- **Tab Session Restore**: Sign-in, selections, current page, repository search, loaded PR pages, theme, and scroll position survive switching away and returning.
 
 ## Quick Start (Local Run)
 
@@ -22,6 +23,13 @@ A Microsoft Teams Tab app for viewing and tracking active Azure DevOps pull requ
 For the full solution, use **Build Solution** in Visual Studio 2026 with Microsoft 365 Agents Toolkit installed, or its 64-bit MSBuild (`MSBuild\Current\Bin\amd64\MSBuild.exe`) with `.\PrListAzDevOps.slnx /t:Build`.
 Plain `dotnet build` of the solution cannot resolve the Visual Studio-provided `Microsoft.TeamsFx.Sdk`; use the backend project command above for CLI builds.
 TypeScript checking runs through npm; the duplicate Visual Studio TypeScript compilation is disabled so both build paths use the project's compiler.
+
+## Choosing Projects and Repositories
+
+1. Sign in, then open **Settings** from the app navigation.
+2. Enter your Azure DevOps organization and choose a project.
+3. Use **Search repositories** to narrow the repository dropdown by name, then choose a repository or **All Repositories**. Searching does not change the selection; **Clear search** restores the full list. Changing the organization or project clears the repository selection and search.
+4. Changes apply automatically. Return to **Pull Requests** to see the current source summary and PR list. **Refresh** and **Load More** remain on this page.
 
 ## Entra ID App Registration (Optional for SSO)
 
