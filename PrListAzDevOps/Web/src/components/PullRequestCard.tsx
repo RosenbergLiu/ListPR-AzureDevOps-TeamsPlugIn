@@ -20,33 +20,27 @@ function getWebUrl(pr: GitPullRequest, organization: string): string {
 
 function getVoteBadge(reviewer: PullRequestReviewer) {
   let badgeClass = "vote-none";
-  let title = `${reviewer.displayName}: No vote`;
-  let symbol = "○";
+  let voteLabel = "No vote";
 
   if (reviewer.vote === 10) {
     badgeClass = "vote-approved";
-    title = `${reviewer.displayName}: Approved`;
-    symbol = "✓";
+    voteLabel = "Approved";
   } else if (reviewer.vote === 5) {
     badgeClass = "vote-approved-suggestions";
-    title = `${reviewer.displayName}: Approved with suggestions`;
-    symbol = "✓*";
+    voteLabel = "Approved with suggestions";
   } else if (reviewer.vote === -5) {
     badgeClass = "vote-waiting";
-    title = `${reviewer.displayName}: Waiting for author`;
-    symbol = "⏳";
+    voteLabel = "Waiting for author";
   } else if (reviewer.vote === -10) {
     badgeClass = "vote-rejected";
-    title = `${reviewer.displayName}: Rejected`;
-    symbol = "✕";
+    voteLabel = "Rejected";
   }
 
-  const initial = reviewer.displayName ? reviewer.displayName.charAt(0).toUpperCase() : "?";
+  const title = `${reviewer.displayName || "Unknown"}: ${voteLabel}`;
 
   return (
     <span key={reviewer.id} className={`reviewer-badge ${badgeClass}`} title={title}>
-      <span className="reviewer-initial">{initial}</span>
-      <span className="vote-symbol">{symbol}</span>
+      {title}
     </span>
   );
 }
